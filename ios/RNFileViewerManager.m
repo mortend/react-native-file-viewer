@@ -35,6 +35,8 @@
 @property(nonatomic, strong) File *file;
 @property(nonatomic, strong) NSNumber *invocation;
 
+- (void)updateToolbar;
+
 @end
 
 @implementation CustomQLViewController
@@ -58,6 +60,139 @@
 
 - (id <QLPreviewItem>)previewController:(QLPreviewController *)controller previewItemAtIndex:(NSInteger)index{
     return self.file;
+}
+
+- (void)myAction:(UIView *)view {
+    NSLog(@"myAction was called!");
+}
+
+- (void)listSubviewsOfView:(UIView *)view {
+
+    NSString *className = NSStringFromClass([view class]);
+
+    if ([className isEqualToString:@"_UIModernBarButton"]) {
+        
+        UIButton* button = (UIButton*) view;
+        NSString* title = button.titleLabel.text;
+    
+        // The Share button is the only button without a label.
+        if (title == nil) {
+        
+            UIView* parent = button.superview;
+            
+            [button removeFromSuperview];
+
+            //[button addTarget:self action:@selector(myAction:) forControlEvents:UIControlEventTouchUpInside];
+            
+            //[button removeTarget:nil action:NULL forControlEvents:UIControlEventAllEvents];
+
+            //[yourButton addTarget:self action:@selector(yourAction:) forControlEvents:UIControlEventTouchUpInside];
+
+            //button = [UIButton buttonWithType:UIButtonTypeSystem];
+            //[button.titleLabel setText:@"Export"];
+            //[button sizeToFit];
+            //[parent addSubview:button];
+            
+            //NSSet* targets = [button allTargets];
+            
+            //for (NSObject *target in targets) {
+            //    NSLog(@"%@", target);
+            //}
+            
+            //[button removeTarget:<#(nullable id)#> action:<#(nullable SEL)#> forControlEvents:<#(UIControlEvents)#>]
+            
+            //[[parent subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
+
+            
+            //button.currentTitle = @"Export";
+            
+            //NSLog(@"%@", view);
+        }
+    }
+
+
+    // Get the subviews of the view
+    NSArray *subviews = [view subviews];
+
+    // Return if there are no subviews
+    if ([subviews count] == 0) return; // COUNT CHECK LINE
+
+    for (UIView *subview in subviews) {
+
+        // Do what you want to do with the subview
+        //NSLog(@"%@", subview);
+
+        // List the subviews of subview
+        [self listSubviewsOfView:subview];
+    }
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    
+    [self listSubviewsOfView:self.view];
+    
+    //self.navigationItem.rightBarButtonItem = nil; //For ipads the share button becomes a rightBarButtonItem
+    //[[self.navigationController toolbar] setHidden:YES]; //This hides the share item
+    
+    //UIBarButtonItem *rightRetain = self.navigationItem.rightBarButtonItem;
+    
+    //UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemReply target:self action:@selector(emailPDF)];
+    //NSArray *items = [NSArray arrayWithObject:item];
+    //[previewController setToolbarItems:items animated:NO];
+    
+    //UIBarButtonItem *email = ...;
+
+    //self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects:nil];
+    //[email release];
+}
+
+- (void)updateToolbar {
+    
+    //[self listSubviewsOfView:self.view];
+    
+    //UIBarButtonItem *rightRetain = self.navigationItem.rightBarButtonItem;
+    
+    //UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemReply target:self action:@selector(emailPDF)];
+    //NSArray *items = [NSArray arrayWithObject:item];
+    //[previewController setToolbarItems:items animated:NO];
+    
+    //UIBarButtonItem *email = ...;
+
+    //self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects:nil];
+    //[email release];
+    
+    // Create a toolbar to have the buttons at the right side of the navigationBar
+    UIToolbar* toolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, 180, 44.01)];
+    [toolbar setTranslucent:YES];
+
+    // Create the array to hold the buttons, which then gets added to the toolbar
+    NSMutableArray* buttons = [[NSMutableArray alloc] initWithCapacity:4];
+
+
+    // Create button 1
+    UIBarButtonItem* button1 = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSearch target:self action:@selector(button1Pressed)];
+    [buttons addObject:button1];
+
+    // Create button 2
+    UIBarButtonItem* button2 = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(button2Pressed)];
+    [buttons addObject:button2];
+
+    // Create button 3
+    UIBarButtonItem* button3 = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemBookmarks target:self action:@selector(button3Pressed)];
+    [buttons addObject:button3];
+
+    // Create a action button
+    UIBarButtonItem* openButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(openWith)];
+    [buttons addObject:openButton];
+
+    // insert the buttons in the toolbar
+    [toolbar setItems:buttons animated:NO];
+
+    // and put the toolbar in the navigation bar
+    [[self navigationItem] setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:toolbar]];
+
 }
 
 @end
@@ -114,12 +249,13 @@ RCT_EXPORT_METHOD(open:(NSString *)path invocation:(nonnull NSNumber *)invocatio
     NSString *displayName = [RCTConvert NSString:options[@"displayName"]];
     File *file = [[File alloc] initWithPath:path title:displayName];
 
-    QLPreviewController *controller = [[CustomQLViewController alloc] initWithFile:file identifier:invocationId];
+    CustomQLViewController *controller = [[CustomQLViewController alloc] initWithFile:file identifier:invocationId];
     controller.delegate = self;
 
     typeof(self) __weak weakSelf = self;
     [[RNFileViewer topViewController] presentViewController:controller animated:YES completion:^{
         [weakSelf sendEventWithName:OPEN_EVENT body: @{@"id": invocationId}];
+        [controller updateToolbar];
     }];
 }
 
